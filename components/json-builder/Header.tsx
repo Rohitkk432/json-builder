@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy, FileJson } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface HeaderProps {
   onCopy: () => void;
@@ -14,10 +14,13 @@ export function Header({ onCopy }: HeaderProps) {
 
   const handleCopy = () => {
     onCopy();
-    toast({
-      title: "JSON Copied",
-      description: "The JSON has been copied to your clipboard",
-    });
+    setTimeout(() => {
+      toast({
+        title: "Copied",
+        description: "JSON has been copied to clipboard",
+        duration: 3000,
+      });
+    }, 100);
   };
 
   return (

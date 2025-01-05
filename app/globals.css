@@ -80,3 +80,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: theme('spacing.2');
+    height: theme('spacing.2');
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: theme('borderRadius.full');
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
+  }
+}
