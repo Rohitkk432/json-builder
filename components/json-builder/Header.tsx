@@ -24,16 +24,25 @@ export function Header({ onCopy }: HeaderProps) {
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-2">
         <Link href="/">
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="hover:bg-primary/10 hover:text-primary transition-colors"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div className="flex items-center gap-3">
-          <FileJson className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">ChatState JSON Builder</h1>
+          <FileJson className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            ChatState JSON Builder
+          </h1>
         </div>
       </div>
-      <Button onClick={handleCopy}>
+      <Button 
+        onClick={handleCopy}
+        className="bg-primary hover:bg-primary/90 transition-colors"
+      >
         <Copy className="h-4 w-4 mr-2" />
         Copy JSON
       </Button>

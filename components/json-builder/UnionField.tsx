@@ -2,6 +2,8 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ObjectBuilder } from "./ObjectBuilder";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 interface UnionFieldProps {
   name: string;
@@ -19,7 +21,6 @@ export function UnionField({ name, value, types, onChange }: UnionFieldProps) {
   const handleTypeChange = (newType: string) => {
     const typeConfig = types.find(t => t.type === newType);
     
-    // Add null check for typeConfig
     if (!typeConfig) {
       console.error(`Type config not found for type: ${newType}`);
       return;
@@ -39,30 +40,40 @@ export function UnionField({ name, value, types, onChange }: UnionFieldProps) {
   const selectedType = types.find(t => t.type === currentType);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="text-sm font-medium">{name}</label>
-        <Select value={currentType} onValueChange={handleTypeChange}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {types.map((type) => (
-              <SelectItem key={type.type} value={type.type}>
-                {type.type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <Card className="p-4 border-l-4 border-l-muted">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-muted-foreground">
+            {name}
+          </Label>
+          <Select value={currentType} onValueChange={handleTypeChange}>
+            <SelectTrigger className="bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((type) => (
+                <SelectItem 
+                  key={type.type} 
+                  value={type.type}
+                  className="capitalize"
+                >
+                  {type.type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      {selectedType?.type === 'object' && selectedType.fields && (
-        <ObjectBuilder
-          fields={selectedType.fields}
-          value={value}
-          onChange={onChange}
-        />
-      )}
-    </div>
+        {selectedType?.type === 'object' && selectedType.fields && (
+          <div className="pl-4 border-l border-muted">
+            <ObjectBuilder
+              fields={selectedType.fields}
+              value={value}
+              onChange={onChange}
+            />
+          </div>
+        )}
+      </div>
+    </Card>
   );
 } 

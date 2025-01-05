@@ -1,17 +1,13 @@
 'use client';
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { ObjectBuilder } from "./ObjectBuilder";
 import { StringField } from "./StringField";
 import { Field } from "@/lib/json-builder/types";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface ArrayBuilderProps {
   name: string;
@@ -21,6 +17,8 @@ interface ArrayBuilderProps {
 }
 
 export function ArrayBuilder({ name, value = [], itemType, onChange }: ArrayBuilderProps) {
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+
   const handleAdd = () => {
     const defaultValue = 
       itemType.type === 'object' ? {} :
@@ -40,61 +38,83 @@ export function ArrayBuilder({ name, value = [], itemType, onChange }: ArrayBuil
     onChange(newArray);
   };
 
+  const toggleCollapse = (index: number) => {
+    setCollapsed(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
   return (
-    <Card className="p-4">
+    <Card className="p-4 border-l-4 border-l-secondary/50 hover:shadow-md transition-all">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium">{name}</h3>
+        <h3 className="text-sm font-medium text-secondary-foreground">{name}</h3>
         <Button
           variant="outline"
           size="sm"
           onClick={handleAdd}
+          className="border-dashed hover:border-solid transition-all hover:border-secondary hover:text-secondary"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Item
         </Button>
       </div>
-      <div className="space-y-2">
-        <Accordion type="multiple" className="space-y-2">
-          {value.map((item, index) => (
-            <AccordionItem 
-              key={index} 
-              value={`item-${index}`}
-              className="border rounded-lg"
-            >
-              <AccordionTrigger className="px-4">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">Item {index + 1}</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="px-4 pb-4 space-y-4">
-                  <div className="flex items-center justify-end">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemove(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {itemType.type === 'object' ? (
-                    <ObjectBuilder
-                      fields={itemType.fields}
-                      value={item}
-                      onChange={(newValue) => handleItemChange(index, newValue)}
-                    />
-                  ) : (
-                    <StringField
-                      name={`${name} ${index + 1}`}
-                      value={item}
-                      onChange={(newValue) => handleItemChange(index, newValue)}
-                    />
+      <div className="space-y-3">
+        {value.map((item, index) => (
+          <Card 
+            key={index}
+            className={cn(
+              "relative overflow-hidden transition-all",
+              "border-l-4 border-l-secondary-foreground/30",
+              "hover:shadow-sm hover:border-l-secondary-foreground/60"
+            )}
+          >
+            <div className="flex items-center gap-2 p-3 bg-muted/30" onClick={() => toggleCollapse(index)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-0 h-auto hover:bg-transparent"
+              >
+                <ChevronDown 
+                  className={cn(
+                    "h-4 w-4 transition-transform text-secondary-foreground",
+                    collapsed[index] && "-rotate-90"
                   )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                />
+              </Button>
+              <span  className="text-sm font-medium text-secondary-foreground">
+                Item {index + 1}
+              </span>
+              <div className="flex-1" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove(index);
+                }}
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            {!collapsed[index] && (
+              <div className="p-4 pt-2">
+                {itemType.type === 'object' ? (
+                  <ObjectBuilder
+                    fields={itemType.fields}
+                    value={item}
+                    onChange={(newValue) => handleItemChange(index, newValue)}
+                  />
+                ) : (
+                  <StringField
+                    name={`${name} ${index + 1}`}
+                    value={item}
+                    onChange={(newValue) => handleItemChange(index, newValue)}
+                    variant="ghost"
+                  />
+                )}
+              </div>
+            )}
+          </Card>
+        ))}
       </div>
     </Card>
   );
