@@ -24,7 +24,7 @@ export interface ArrayField extends BaseField {
 
 export interface RecordField extends BaseField {
   type: 'record';
-  itemType: ObjectField;
+  itemType: SimpleField | ObjectField;
 }
 
 export type Field = SimpleField | ObjectField | ArrayField | RecordField;

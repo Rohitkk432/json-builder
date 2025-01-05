@@ -5,105 +5,31 @@ import { ObjectBuilder } from '@/components/json-builder/ObjectBuilder';
 import { JsonPreview } from '@/components/json-builder/JsonPreview';
 import { Header } from '@/components/json-builder/Header';
 import { Card } from '@/components/ui/card';
-import { Field, ObjectField, ArrayField } from '@/lib/json-builder/types';
-
-const chatStateFields: Field[] = [
-  {
-    name: 'messages',
-    type: 'array' as const,
-    value: [],
-    itemType: {
-      name: 'message',
-      type: 'object' as const,
-      value: {},
-      fields: [
-        { name: 'user_message', type: 'string' as const, value: '' },
-        { name: 'bot_response', type: 'string' as const, value: '' },
-        { 
-          name: 'company_tickers', 
-          type: 'array' as const, 
-          value: [], 
-          itemType: { name: 'ticker', type: 'string' as const, value: '' }
-        },
-        { 
-          name: 'quarters', 
-          type: 'array' as const, 
-          value: [], 
-          itemType: { name: 'quarter', type: 'string' as const, value: '' }
-        },
-        { 
-          name: 'citations',
-          type: 'array' as const,
-          value: [],
-          isOptional: true,
-          itemType: {
-            name: 'citation',
-            type: 'object' as const,
-            value: {},
-            fields: [
-              { name: 'company_ticker', type: 'string' as const, value: '' },
-              { name: 'financial_quarter', type: 'string' as const, value: '' },
-              { name: 'chunk_text', type: 'string' as const, value: '' },
-              { name: 'page_number', type: 'number' as const, value: 0 }
-            ]
-          }
-        },
-        { name: 'error', type: 'boolean' as const, value: false, isOptional: true }
-      ]
-    }
-  },
-  { name: 'isLoading', type: 'boolean' as const, value: false },
-  { name: 'isGenerating', type: 'boolean' as const, value: false },
-  { name: 'isEditing', type: 'boolean' as const, value: false },
-  {
-    name: 'selectedCitations',
-    type: 'array' as const,
-    value: [],
-    itemType: {
-      name: 'citation',
-      type: 'object' as const,
-      value: {},
-      fields: [
-        { name: 'company_ticker', type: 'string' as const, value: '' },
-        { name: 'financial_quarter', type: 'string' as const, value: '' },
-        { name: 'chunk_text', type: 'string' as const, value: '' },
-        { name: 'page_number', type: 'number' as const, value: 0 }
-      ]
-    }
-  },
-  {
-    name: 'tooltipData',
-    type: 'record' as const,
-    value: {},
-    itemType: {
-      name: 'insightResponse',
-      type: 'object' as const,
-      value: {},
-      fields: [
-        {
-          name: 'insights',
-          type: 'array' as const,
-          value: [],
-          itemType: {
-            name: 'insight',
-            type: 'object' as const,
-            value: {},
-            fields: [
-              { name: 'label', type: 'string' as const, value: '' },
-              { name: 'insight_text', type: 'string' as const, value: '' }
-            ]
-          }
-        }
-      ]
-    }
-  }
-];
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TypeDefinitionEditor } from '@/components/json-builder/TypeDefinitionEditor';
+import { parseTypeDefinitions } from '@/lib/json-builder/parser';
+import { chatStateTypeString } from '@/lib/json-builder/constants';
+import { Field } from '@/lib/json-builder/types';
 
 export default function JsonBuilderPage() {
+  const [activeTab, setActiveTab] = useState('types');
   const [jsonData, setJsonData] = useState({});
+  const [fields, setFields] = useState<Field[]>(() => {
+    try {
+      return parseTypeDefinitions(chatStateTypeString);
+    } catch (error) {
+      console.error('Failed to parse initial type definitions:', error);
+      return [];
+    }
+  });
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+  };
+
+  const handleTypesParsed = (newFields: Field[]) => {
+    setFields(newFields);
+    setActiveTab('builder');
   };
 
   return (
@@ -111,13 +37,29 @@ export default function JsonBuilderPage() {
       <div className="max-w-7xl mx-auto">
         <Header onCopy={handleCopyJson} />
         <div className="grid gap-8 md:grid-cols-2">
-          <Card className="p-6">
-            <ObjectBuilder
-              fields={chatStateFields}
-              value={jsonData}
-              onChange={setJsonData}
-            />
-          </Card>
+          <div>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="types">Types</TabsTrigger>
+                <TabsTrigger value="builder">Builder</TabsTrigger>
+              </TabsList>
+              <TabsContent value="types">
+                <TypeDefinitionEditor 
+                  onTypesParsed={handleTypesParsed} 
+                  initialTypes={chatStateTypeString}
+                />
+              </TabsContent>
+              <TabsContent value="builder">
+                <Card className="p-6">
+                  <ObjectBuilder
+                    fields={fields}
+                    value={jsonData}
+                    onChange={setJsonData}
+                  />
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
           <JsonPreview data={jsonData} />
         </div>
       </div>

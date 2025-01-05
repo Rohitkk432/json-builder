@@ -1,15 +1,14 @@
 'use client';
 
-import { Card } from "@/components/ui/card";
-import { StringField } from "./StringField";
-import { NumberField } from "./NumberField";
-import { BooleanField } from "./BooleanField";
-import { ArrayBuilder } from "./ArrayBuilder";
-import { EnumField } from "./EnumField";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
-import { Field, ObjectField, ArrayField, RecordField } from "@/lib/json-builder/types";
+import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { StringField } from './StringField';
+import { NumberField } from './NumberField';
+import { BooleanField } from './BooleanField';
+import { ArrayBuilder } from './ArrayBuilder';
+import { Field, ObjectField, ArrayField, RecordField } from '@/lib/json-builder/types';
 
 interface ObjectBuilderProps {
   fields: Field[];
@@ -18,15 +17,17 @@ interface ObjectBuilderProps {
 }
 
 export function ObjectBuilder({ fields, value = {}, onChange }: ObjectBuilderProps) {
-  const [editingKey, setEditingKey] = useState<{original: string, current: string} | null>(null);
+  const [editingKey, setEditingKey] = useState<{ original: string; current: string } | null>(null);
 
-  const handleFieldChange = (fieldName: string, fieldValue: any) => {
-    onChange({ ...value, [fieldName]: fieldValue });
+  const handleFieldChange = (name: string, fieldValue: any) => {
+    onChange({ ...value, [name]: fieldValue });
   };
 
-  const handleKeyBlur = (field: Field, originalKey: string) => {
-    if (editingKey && editingKey.current !== originalKey) {
-      const newData = { ...value[field.name] };
+  const handleKeyBlur = (field: RecordField, originalKey: string) => {
+    if (!editingKey) return;
+
+    const newData = { ...value[field.name] };
+    if (editingKey.current && editingKey.current !== originalKey) {
       delete newData[originalKey];
       newData[editingKey.current] = value[field.name][originalKey];
       handleFieldChange(field.name, newData);
@@ -74,16 +75,6 @@ export function ObjectBuilder({ fields, value = {}, onChange }: ObjectBuilderPro
             onChange={(newValue) => handleFieldChange(field.name, newValue)}
           />
         );
-      case 'enum':
-        return field.enumValues ? (
-          <EnumField
-            key={field.name}
-            name={field.name}
-            value={value[field.name] || field.enumValues[0] || ''}
-            enumValues={field.enumValues}
-            onChange={(newValue) => handleFieldChange(field.name, newValue)}
-          />
-        ) : null;
       case 'record':
         const recordField = field as RecordField;
         return (
@@ -95,9 +86,11 @@ export function ObjectBuilder({ fields, value = {}, onChange }: ObjectBuilderPro
                 size="sm"
                 onClick={() => {
                   const newKey = `key_${Object.keys(value[field.name] || {}).length + 1}`;
+                  const defaultValue = recordField.itemType.type === 'boolean' ? false :
+                                     recordField.itemType.type === 'number' ? 0 : '';
                   handleFieldChange(field.name, {
                     ...value[field.name],
-                    [newKey]: { insights: [] }
+                    [newKey]: recordField.itemType.type === 'object' ? {} : defaultValue
                   });
                 }}
               >
@@ -115,7 +108,7 @@ export function ObjectBuilder({ fields, value = {}, onChange }: ObjectBuilderPro
                         onChange={(newValue) => {
                           setEditingKey({ original: key, current: newValue });
                         }}
-                        onBlur={() => handleKeyBlur(field, key)}
+                        onBlur={() => handleKeyBlur(recordField, key)}
                       />
                     </div>
                     <Button
@@ -131,34 +124,66 @@ export function ObjectBuilder({ fields, value = {}, onChange }: ObjectBuilderPro
                     </Button>
                   </div>
                   <div className="pl-4 border-l-2">
-                    <ObjectBuilder
-                      fields={recordField.itemType.fields}
-                      value={entryValue}
-                      onChange={(newValue) => {
-                        handleFieldChange(field.name, {
-                          ...value[field.name],
-                          [key]: newValue
-                        });
-                      }}
-                    />
+                    {recordField.itemType.type === 'object' ? (
+                      <ObjectBuilder
+                        fields={recordField.itemType.fields}
+                        value={entryValue}
+                        onChange={(newValue) => {
+                          handleFieldChange(field.name, {
+                            ...value[field.name],
+                            [key]: newValue
+                          });
+                        }}
+                      />
+                    ) : (
+                      renderPrimitiveField(
+                        recordField.itemType.type,
+                        entryValue,
+                        (newValue) => {
+                          handleFieldChange(field.name, {
+                            ...value[field.name],
+                            [key]: newValue
+                          });
+                        }
+                      )
+                    )}
                   </div>
                 </Card>
               ))}
             </div>
           </Card>
         );
-      case 'object':
-        const objectField = field as ObjectField;
-        return objectField.fields ? (
-          <Card key={field.name} className="p-4">
-            <h3 className="font-medium mb-2">{field.name}</h3>
-            <ObjectBuilder
-              fields={objectField.fields}
-              value={value[field.name] || {}}
-              onChange={(newValue) => handleFieldChange(field.name, newValue)}
-            />
-          </Card>
-        ) : null;
+      default:
+        return null;
+    }
+  };
+
+  const renderPrimitiveField = (type: string, value: any, onChange: (value: any) => void) => {
+    switch (type) {
+      case 'string':
+        return (
+          <StringField
+            name="Value"
+            value={value || ''}
+            onChange={onChange}
+          />
+        );
+      case 'number':
+        return (
+          <NumberField
+            name="Value"
+            value={value || 0}
+            onChange={onChange}
+          />
+        );
+      case 'boolean':
+        return (
+          <BooleanField
+            name="Value"
+            value={value || false}
+            onChange={onChange}
+          />
+        );
       default:
         return null;
     }
