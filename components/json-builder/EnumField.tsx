@@ -21,7 +21,7 @@ export function EnumField({ name, value, enumValues, onChange }: EnumFieldProps)
     <div className="space-y-2">
       <Label htmlFor={name}>{name}</Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={name} className="w-full">
+        <SelectTrigger id={name}>
           <SelectValue placeholder={`Select ${name}`} />
         </SelectTrigger>
         <SelectContent>

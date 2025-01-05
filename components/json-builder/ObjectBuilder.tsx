@@ -1,14 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { StringField } from './StringField';
 import { NumberField } from './NumberField';
 import { BooleanField } from './BooleanField';
 import { ArrayBuilder } from './ArrayBuilder';
 import { Field, ObjectField, ArrayField, RecordField } from '@/lib/json-builder/types';
+import { UnionField } from './UnionField';
+import { EnumField } from './EnumField';
 
 interface ObjectBuilderProps {
   fields: Field[];
@@ -97,61 +105,92 @@ export function ObjectBuilder({ fields, value = {}, onChange }: ObjectBuilderPro
                 Add Entry
               </Button>
             </div>
-            <div className="space-y-4">
-              {Object.entries(value[field.name] || {}).map(([key, entryValue]) => (
-                <Card key={key} className="p-4">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex-1">
-                      <StringField
-                        name="Key"
-                        value={editingKey?.original === key ? editingKey.current : key}
-                        onChange={(newValue) => {
-                          setEditingKey({ original: key, current: newValue });
-                        }}
-                        onBlur={() => handleKeyBlur(recordField, key)}
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const newData = { ...value[field.name] };
-                        delete newData[key];
-                        handleFieldChange(field.name, newData);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="pl-4 border-l-2">
-                    {recordField.itemType.type === 'object' ? (
-                      <ObjectBuilder
-                        fields={recordField.itemType.fields}
-                        value={entryValue}
-                        onChange={(newValue) => {
-                          handleFieldChange(field.name, {
-                            ...value[field.name],
-                            [key]: newValue
-                          });
-                        }}
-                      />
-                    ) : (
-                      renderPrimitiveField(
-                        recordField.itemType.type,
-                        entryValue,
-                        (newValue) => {
-                          handleFieldChange(field.name, {
-                            ...value[field.name],
-                            [key]: newValue
-                          });
-                        }
-                      )
-                    )}
-                  </div>
-                </Card>
-              ))}
+            <div className="space-y-2">
+              <Accordion type="multiple" className="space-y-2">
+                {Object.entries(value[field.name] || {}).map(([key, entryValue]) => (
+                  <AccordionItem key={key} value={key} className="border rounded-lg">
+                    <AccordionTrigger className="px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{key}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="px-4 pb-4 space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <StringField
+                              name="Key"
+                              value={editingKey?.original === key ? editingKey.current : key}
+                              onChange={(newValue) => {
+                                setEditingKey({ original: key, current: newValue });
+                              }}
+                              onBlur={() => handleKeyBlur(recordField, key)}
+                            />
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const newData = { ...value[field.name] };
+                              delete newData[key];
+                              handleFieldChange(field.name, newData);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="pl-4 border-l-2">
+                          {recordField.itemType.type === 'object' ? (
+                            <ObjectBuilder
+                              fields={recordField.itemType.fields}
+                              value={entryValue}
+                              onChange={(newValue) => {
+                                handleFieldChange(field.name, {
+                                  ...value[field.name],
+                                  [key]: newValue
+                                });
+                              }}
+                            />
+                          ) : (
+                            renderPrimitiveField(
+                              recordField.itemType.type,
+                              entryValue,
+                              (newValue) => {
+                                handleFieldChange(field.name, {
+                                  ...value[field.name],
+                                  [key]: newValue
+                                });
+                              }
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           </Card>
+        );
+      case 'enum':
+        return (
+          <EnumField
+            key={field.name}
+            name={field.name}
+            value={value[field.name] || field.enumValues?.[0] || ''}
+            enumValues={field.enumValues || []}
+            onChange={(newValue) => handleFieldChange(field.name, newValue)}
+          />
+        );
+      case 'union':
+        return (
+          <UnionField
+            key={field.name}
+            name={field.name}
+            value={value[field.name] || ''}
+            types={field.unionTypes || []}
+            onChange={(newValue) => handleFieldChange(field.name, newValue)}
+          />
         );
       default:
         return null;

@@ -4,6 +4,10 @@ type TypeInfo = {
   isArray?: boolean;
   isOptional?: boolean;
   enumValues?: string[];
+  unionTypes?: Array<{
+    type: string;
+    isInterface?: boolean;
+  }>;
   keyType?: string;
   valueType?: string;
 };
@@ -35,9 +39,62 @@ export function parseTypeDefinitions(typeString: string): any[] {
       const fieldName = field.replace('?', '');
       const isOptional = field.includes('?');
       
-      // Clean up type declaration by removing semicolon and extra spaces
+      // Clean up type declaration
       const cleanType = typeDeclaration.replace(';', '').trim();
       
+      // Handle literal union types (enums with string literals)
+      if (cleanType.includes('"') || cleanType.includes("'")) {
+        const enumValues = cleanType
+          .split('|')
+          .map(t => t.trim().replace(/['"]/g, ''));
+        
+        interfaces[currentInterface].push({
+          name: fieldName,
+          type: 'enum',
+          enumValues,
+          isOptional
+        });
+        continue;
+      }
+      
+      // Handle type unions (e.g., string | number | SomeInterface)
+      if (cleanType.includes('|')) {
+        const unionTypes = cleanType
+          .split('|')
+          .map(t => t.trim())
+          .map(t => ({
+            type: t,
+            isInterface: !['string', 'number', 'boolean'].includes(t) && 
+                        !t.startsWith('"') && 
+                        !t.startsWith("'")
+          }));
+        
+        // If all types are string literals, treat as enum
+        if (unionTypes.every(t => t.type.startsWith('"') || t.type.startsWith("'"))) {
+          const enumValues = unionTypes.map(t => t.type.replace(/['"]/g, ''));
+          interfaces[currentInterface].push({
+            name: fieldName,
+            type: 'enum',
+            enumValues,
+            isOptional
+          });
+        } else {
+          // Remove quotes from string literals in union types
+          const cleanUnionTypes = unionTypes.map(t => ({
+            ...t,
+            type: t.type.replace(/['"]/g, '')
+          }));
+
+          interfaces[currentInterface].push({
+            name: fieldName,
+            type: 'union',
+            unionTypes: cleanUnionTypes,
+            isOptional
+          });
+        }
+        continue;
+      }
+
       // Handle array types
       const isArray = cleanType.endsWith('[]');
       const baseType = cleanType.replace('[]', '');
@@ -72,6 +129,40 @@ export function parseTypeDefinitions(typeString: string): any[] {
 
   // Convert TypeInfo to Field structure
   function convertToField(typeInfo: TypeInfo): any {
+    if (typeInfo.type === 'enum' && typeInfo.enumValues) {
+      return {
+        name: typeInfo.name,
+        type: 'enum' as const,
+        value: typeInfo.enumValues[0],
+        enumValues: typeInfo.enumValues,
+        isOptional: typeInfo.isOptional
+      };
+    }
+
+    if (typeInfo.type === 'union' && typeInfo.unionTypes) {
+      const unionFields = typeInfo.unionTypes.map(ut => {
+        if (ut.isInterface) {
+          return {
+            type: 'object' as const,
+            fields: interfaces[ut.type]?.map(convertToField) || []
+          };
+        }
+        return {
+          type: ut.type as 'string' | 'number' | 'boolean',
+          value: ut.type === 'boolean' ? false : 
+                 ut.type === 'number' ? 0 : ''
+        };
+      });
+
+      return {
+        name: typeInfo.name,
+        type: 'union' as const,
+        value: '',
+        unionTypes: unionFields,
+        isOptional: typeInfo.isOptional
+      };
+    }
+
     // Handle Record type
     if (typeInfo.type === 'record') {
       // Check if value type is a primitive type
@@ -92,7 +183,6 @@ export function parseTypeDefinitions(typeString: string): any[] {
         };
       }
 
-      // Handle Record with interface value type
       return {
         name: typeInfo.name,
         type: 'record' as const,

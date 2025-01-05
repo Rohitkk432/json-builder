@@ -1,4 +1,4 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'record' | 'enum';
+export type FieldType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'record' | 'enum' | 'union';
 
 export interface BaseField {
   name: string;
@@ -6,10 +6,11 @@ export interface BaseField {
   value: any;
   isOptional?: boolean;
   enumValues?: string[];
+  unionTypes?: FieldType[]; // For union types like number | string
 }
 
 export interface SimpleField extends BaseField {
-  type: 'string' | 'number' | 'boolean' | 'enum';
+  type: 'string' | 'number' | 'boolean' | 'enum' | 'union';
 }
 
 export interface ObjectField extends BaseField {
