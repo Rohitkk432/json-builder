@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'JSON Builder',
-  description: 'A visual JSON builder for ChatState',
+  description: 'A visual JSON builder',
 };
 
 export default function RootLayout({

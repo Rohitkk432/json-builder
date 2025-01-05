@@ -27,6 +27,39 @@ interface EditingKey {
   originalKey: string;
 }
 
+const getDefaultValueForField = (field: Field): any => {
+  if (field.isOptional) {
+    return undefined;
+  }
+
+  switch (field.type) {
+    case 'string':
+      return '';
+    case 'number':
+      return 0;
+    case 'boolean':
+      return false;
+    case 'object':
+      if (!field.fields) return {};
+      const defaultObj: any = {};
+      field.fields.forEach(f => {
+        // Only set default value if the field is required (not optional)
+        if (!f.optional) {
+          defaultObj[f.name] = getDefaultValueForField(f);
+        }
+      });
+      return defaultObj;
+    case 'array':
+      return [];
+    case 'enum':
+      return field.enumValues?.[0] || '';
+    case 'record':
+      return {};
+    default:
+      return null;
+  }
+};
+
 export function ObjectBuilder({ 
   fields = [], 
   value = {}, 
@@ -39,11 +72,13 @@ export function ObjectBuilder({
 
   const handleAddRecord = () => {
     const newKey = `key_${Object.keys(value).length + 1}`;
+    const defaultValue = fields[0]?.itemType ? getDefaultValueForField(fields[0].itemType) : {};
+    
     onChange({ 
       ...value, 
       [newKey]: { 
         order: Object.keys(value).length,
-        value: {} 
+        value: defaultValue 
       }
     });
   };
@@ -178,11 +213,13 @@ export function ObjectBuilder({
           variant="outline"
           onClick={() => {
             const newKey = `key_${Object.keys(value[field.name] || {}).length + 1}`;
+            const defaultValue = getDefaultValueForField(field.itemType);
+            
             handleFieldChange(field.name, {
               ...value[field.name],
               [newKey]: {
                 order: Object.keys(value[field.name] || {}).length,
-                value: {}
+                value: defaultValue
               }
             });
           }}
@@ -328,8 +365,14 @@ export function ObjectBuilder({
                 <StringField
                   key={name}
                   name={name}
-                  value={value[name] || ''}
+                  value={value[name]}
                   onChange={(newValue) => handleFieldChange(name, newValue)}
+                  isOptional={field.isOptional}
+                  onDelete={field.isOptional ? () => {
+                    const newObj = { ...value };
+                    delete newObj[name];
+                    onChange(newObj);
+                  } : undefined}
                 />
               );
             case 'number':
@@ -337,8 +380,22 @@ export function ObjectBuilder({
                 <NumberField
                   key={name}
                   name={name}
-                  value={value[name] || 0}
-                  onChange={(newValue) => handleFieldChange(name, newValue)}
+                  value={value[name]}
+                  onChange={(newValue) => {
+                    if (newValue === undefined) {
+                      const newObj = { ...value };
+                      delete newObj[name];
+                      onChange(newObj);
+                    } else {
+                      handleFieldChange(name, newValue);
+                    }
+                  }}
+                  isOptional={field.isOptional}
+                  onDelete={field.isOptional ? () => {
+                    const newObj = { ...value };
+                    delete newObj[name];
+                    onChange(newObj);
+                  } : undefined}
                 />
               );
             case 'boolean':
@@ -346,8 +403,22 @@ export function ObjectBuilder({
                 <BooleanField
                   key={name}
                   name={name}
-                  value={value[name] || false}
-                  onChange={(newValue) => handleFieldChange(name, newValue)}
+                  value={value[name]}
+                  onChange={(newValue) => {
+                    if (newValue === undefined) {
+                      const newObj = { ...value };
+                      delete newObj[name];
+                      onChange(newObj);
+                    } else {
+                      handleFieldChange(name, newValue);
+                    }
+                  }}
+                  isOptional={field.isOptional}
+                  onDelete={field.isOptional ? () => {
+                    const newObj = { ...value };
+                    delete newObj[name];
+                    onChange(newObj);
+                  } : undefined}
                 />
               );
             case 'enum':
@@ -355,9 +426,18 @@ export function ObjectBuilder({
                 <EnumField
                   key={name}
                   name={name}
-                  value={value[name] || enumValues[0]}
+                  value={value[name]}
                   enumValues={enumValues}
-                  onChange={(newValue) => handleFieldChange(name, newValue)}
+                  onChange={(newValue) => {
+                    if (newValue === undefined) {
+                      const newObj = { ...value };
+                      delete newObj[name];
+                      onChange(newObj);
+                    } else {
+                      handleFieldChange(name, newValue);
+                    }
+                  }}
+                  isOptional={field.isOptional}
                 />
               );
             case 'array':
@@ -365,9 +445,23 @@ export function ObjectBuilder({
                 <ArrayBuilder
                   key={name}
                   name={name}
-                  value={Array.isArray(value[name]) ? value[name] : []}
+                  value={value[name]}
                   itemType={itemType}
-                  onChange={(newValue) => handleFieldChange(name, newValue)}
+                  onChange={(newValue) => {
+                    if (newValue === undefined) {
+                      const newObj = { ...value };
+                      delete newObj[name];
+                      onChange(newObj);
+                    } else {
+                      handleFieldChange(name, newValue);
+                    }
+                  }}
+                  isOptional={field.isOptional}
+                  onDelete={field.isOptional ? () => {
+                    const newObj = { ...value };
+                    delete newObj[name];
+                    onChange(newObj);
+                  } : undefined}
                 />
               );
             case 'record':

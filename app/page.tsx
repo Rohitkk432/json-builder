@@ -10,7 +10,7 @@ export default function Home() {
         <FileJson className="w-16 h-16 mx-auto mb-6 text-primary" />
         <h1 className="text-3xl font-bold mb-4">JSON Builder</h1>
         <p className="text-muted-foreground mb-8">
-          A visual tool to build and edit ChatState JSON structures
+          A visual tool to build and edit JSON structures
         </p>
         <Link href="/json-builder">
           <Button size="lg">
