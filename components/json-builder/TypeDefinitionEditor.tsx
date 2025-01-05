@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -9,21 +9,47 @@ import { useToast } from '@/hooks/use-toast';
 
 interface TypeDefinitionEditorProps {
   onTypesParsed: (fields: any[]) => void;
-  initialTypes: string;
 }
 
-export function TypeDefinitionEditor({ onTypesParsed, initialTypes }: TypeDefinitionEditorProps) {
-  const [typeDefinitions, setTypeDefinitions] = useState(initialTypes);
+const LOCAL_STORAGE_KEY = 'json-builder-type-definitions';
+
+export function TypeDefinitionEditor({ onTypesParsed }: TypeDefinitionEditorProps) {
+  const [typeDefinitions, setTypeDefinitions] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
+  // Load saved type definitions from localStorage on mount
+  useEffect(() => {
+    const savedTypes = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedTypes) {
+      setTypeDefinitions(savedTypes);
+    }
+  }, []);
+
   const handleGenerate = async () => {
+    if (!typeDefinitions.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter type definitions",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
       // Add a small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Save to localStorage before parsing
+      localStorage.setItem(LOCAL_STORAGE_KEY, typeDefinitions);
+      
       const fields = parseTypeDefinitions(typeDefinitions);
+      
+      if (!fields || fields.length === 0) {
+        throw new Error("No fields were generated from the type definitions");
+      }
+      
       onTypesParsed(fields);
       
       // Find and click the builder tab
@@ -38,10 +64,26 @@ export function TypeDefinitionEditor({ onTypesParsed, initialTypes }: TypeDefini
       });
     } catch (error) {
       console.error('Failed to parse type definitions:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to parse type definitions";
+      if (error instanceof Error) {
+        if (error.message.includes("RootState")) {
+          errorMessage = "RootState type/interface not found. Please define a RootState.";
+        } else if (error.message.includes("Invalid type declaration")) {
+          errorMessage = "Invalid type declaration format. Please check your syntax.";
+        } else if (error.message.includes("Could not determine interface")) {
+          errorMessage = "Could not parse interface/type declaration. Please check your syntax.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to parse type definitions",
+        description: errorMessage,
         variant: "destructive",
+        duration: 5000, // Show error for longer
       });
     } finally {
       setIsGenerating(false);

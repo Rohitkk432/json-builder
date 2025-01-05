@@ -7,21 +7,12 @@ import { Header } from '@/components/json-builder/Header';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TypeDefinitionEditor } from '@/components/json-builder/TypeDefinitionEditor';
-import { parseTypeDefinitions } from '@/lib/json-builder/parser';
-import { chatStateTypeString } from '@/lib/json-builder/constants';
 import { Field } from '@/lib/json-builder/types';
 
 export default function JsonBuilderPage() {
   const [activeTab, setActiveTab] = useState('types');
   const [jsonData, setJsonData] = useState({});
-  const [fields, setFields] = useState<Field[]>(() => {
-    try {
-      return parseTypeDefinitions(chatStateTypeString);
-    } catch (error) {
-      console.error('Failed to parse initial type definitions:', error);
-      return [];
-    }
-  });
+  const [fields, setFields] = useState<Field[]>([]);
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
@@ -29,8 +20,12 @@ export default function JsonBuilderPage() {
 
   const handleTypesParsed = (newFields: Field[]) => {
     setFields(newFields);
+    setJsonData({}); // Reset JSON data when types change
     setActiveTab('builder');
   };
+
+  // Check if we're dealing with a root Record type
+  const isRootRecord = fields.length === 1 && fields[0].type === 'object';
 
   return (
     <div className="container mx-auto py-8">
@@ -44,10 +39,7 @@ export default function JsonBuilderPage() {
                 <TabsTrigger value="builder">Builder</TabsTrigger>
               </TabsList>
               <TabsContent value="types">
-                <TypeDefinitionEditor 
-                  onTypesParsed={handleTypesParsed} 
-                  initialTypes={chatStateTypeString}
-                />
+                <TypeDefinitionEditor onTypesParsed={handleTypesParsed} />
               </TabsContent>
               <TabsContent value="builder">
                 <Card className="p-6">
@@ -55,6 +47,7 @@ export default function JsonBuilderPage() {
                     fields={fields}
                     value={jsonData}
                     onChange={setJsonData}
+                    isRecord={isRootRecord}
                   />
                 </Card>
               </TabsContent>

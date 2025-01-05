@@ -10,6 +10,7 @@ type TypeInfo = {
   }>;
   keyType?: string;
   valueType?: string;
+  isDirectType?: boolean;
 };
 
 export function parseTypeDefinitions(typeString: string): any[] {
@@ -19,13 +20,111 @@ export function parseTypeDefinitions(typeString: string): any[] {
   // Split by lines and filter out empty lines
   const lines = typeString.split('\n').filter(line => line.trim());
   
-  // First pass: collect all interfaces
+  // First pass: collect all interfaces and type assignments
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Match interface declaration
-    if (line.startsWith('export interface ')) {
-      currentInterface = line.split(' ')[2];
+    // Match interface declaration or type assignment (with or without export)
+    if (line.startsWith('export interface ') || 
+        line.startsWith('interface ') || 
+        line.startsWith('export type ') || 
+        line.startsWith('type ')) {
+      
+      const isTypeAssignment = line.includes('=');
+      const isInterfaceWithType = line.includes(':') && !line.includes('{');
+      
+      let interfaceName = '';
+      let typeDeclaration = '';
+      
+      if (isTypeAssignment) {
+        // Handle: [export] type RootState = Record<string,Discount>
+        const parts = line.split('=').map(p => p.trim());
+        interfaceName = parts[0]
+          .replace('export type', '')
+          .replace('type', '')
+          .trim();
+        typeDeclaration = parts[1]?.replace(';', '')?.trim();
+      } else if (isInterfaceWithType) {
+        // Handle: [export] interface RootState : Record<string,Discount>
+        const parts = line.split(':').map(p => p.trim());
+        interfaceName = parts[0]
+          .replace('export interface', '')
+          .replace('interface', '')
+          .trim();
+        typeDeclaration = parts[1]?.replace(';', '')?.trim();
+      } else {
+        // Handle: [export] interface RootState { ... }
+        interfaceName = line
+          .replace('export interface', '')
+          .replace('interface', '')
+          .split('{')[0]
+          .trim();
+      }
+
+      if (!interfaceName) {
+        throw new Error(`Could not determine interface/type name from line: ${line}`);
+      }
+
+      currentInterface = interfaceName;
+
+      // Handle direct type assignments
+      if (typeDeclaration) {
+        // Handle Record type
+        if (typeDeclaration.startsWith('Record<')) {
+          const [keyType, valueType] = typeDeclaration
+            .replace('Record<', '')
+            .replace('>', '')
+            .split(',')
+            .map(t => t.trim());
+            
+          if (!valueType) {
+            throw new Error(`Invalid Record type declaration: ${typeDeclaration}`);
+          }
+
+          interfaces[currentInterface] = [{
+            name: '',
+            type: 'record',
+            keyType,
+            valueType,
+            isDirectType: true
+          }];
+          currentInterface = '';
+          continue;
+        }
+        
+        // Handle array type
+        if (typeDeclaration.endsWith('[]')) {
+          const baseType = typeDeclaration.replace('[]', '');
+          interfaces[currentInterface] = [{
+            name: '',
+            type: baseType,
+            isArray: true,
+            isDirectType: true
+          }];
+          currentInterface = '';
+          continue;
+        }
+        
+        // Handle direct interface assignment (e.g., RootState : Discount)
+        if (interfaces[typeDeclaration] || typeDeclaration.match(/^[A-Z][a-zA-Z0-9]*$/)) {
+          interfaces[currentInterface] = [{
+            name: '',
+            type: typeDeclaration,
+            isDirectType: true
+          }];
+          currentInterface = '';
+          continue;
+        }
+        
+        // Handle other direct type assignments
+        interfaces[currentInterface] = [{
+          name: '',
+          type: typeDeclaration
+        }];
+        currentInterface = '';
+        continue;
+      }
+      
       interfaces[currentInterface] = [];
       continue;
     }
@@ -165,6 +264,11 @@ export function parseTypeDefinitions(typeString: string): any[] {
 
     // Handle Record type
     if (typeInfo.type === 'record') {
+      // Ensure valueType exists
+      if (!typeInfo.valueType) {
+        throw new Error('Record type must have a value type');
+      }
+
       // Check if value type is a primitive type
       const isPrimitiveValueType = ['string', 'number', 'boolean'].includes(typeInfo.valueType);
       
@@ -183,6 +287,21 @@ export function parseTypeDefinitions(typeString: string): any[] {
         };
       }
 
+      // For direct Record types, return a different structure
+      if (typeInfo.isDirectType) {
+        return {
+          type: 'record' as const,
+          value: {},
+          itemType: {
+            name: 'recordItem',
+            type: 'object' as const,
+            value: {},
+            fields: interfaces[typeInfo.valueType]?.map(convertToField) || []
+          }
+        };
+      }
+
+      // For nested Record types
       return {
         name: typeInfo.name,
         type: 'record' as const,
@@ -208,9 +327,19 @@ export function parseTypeDefinitions(typeString: string): any[] {
           }
         : {
             name: 'item',
-            type: 'string' as const,
-            value: ''
+            type: typeInfo.type as 'string' | 'number' | 'boolean',
+            value: typeInfo.type === 'boolean' ? false : 
+                   typeInfo.type === 'number' ? 0 : ''
           };
+
+      // For direct array types, return array structure directly
+      if (typeInfo.isDirectType) {
+        return {
+          type: 'array' as const,
+          value: [],
+          itemType
+        };
+      }
 
       return {
         name: typeInfo.name,
@@ -218,6 +347,15 @@ export function parseTypeDefinitions(typeString: string): any[] {
         value: [],
         isOptional: typeInfo.isOptional,
         itemType
+      };
+    }
+
+    // Handle direct type assignments
+    if (typeInfo.isDirectType && interfaces[typeInfo.type]) {
+      return {
+        type: 'object' as const,
+        value: {},
+        fields: interfaces[typeInfo.type].map(convertToField)
       };
     }
 
@@ -247,10 +385,16 @@ export function parseTypeDefinitions(typeString: string): any[] {
     };
   }
 
-  // Start conversion from ChatState interface
-  if (!interfaces['ChatState']) {
-    throw new Error('ChatState interface not found in type definitions');
+  // Start conversion from RootState
+  if (!interfaces['RootState']) {
+    throw new Error('RootState type/interface not found in type definitions');
   }
 
-  return interfaces['ChatState'].map(convertToField);
+  // Special handling for direct types - return the field directly
+  const rootFields = interfaces['RootState'].map(convertToField);
+  if (rootFields.length === 1 && !rootFields[0].name) {
+    return [rootFields[0]];
+  }
+
+  return rootFields;
 }
