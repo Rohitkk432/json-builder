@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { Description } from "./Description";
 
 interface BooleanFieldProps {
   name: string;
@@ -14,6 +15,7 @@ interface BooleanFieldProps {
   variant?: 'default' | 'ghost';
   isOptional?: boolean;
   onDelete?: () => void;
+  description?: string;
 }
 
 export function BooleanField({ 
@@ -22,7 +24,8 @@ export function BooleanField({
   onChange,
   variant = 'default',
   isOptional,
-  onDelete
+  onDelete,
+  description
 }: BooleanFieldProps) {
   return (
     <Card className={cn(
@@ -32,12 +35,15 @@ export function BooleanField({
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Label 
-            htmlFor={name}
-            className="text-sm font-medium text-muted-foreground"
-          >
-            {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
-          </Label>
+          <div className="space-y-0.5">
+            <Label 
+              htmlFor={name}
+              className="text-sm font-medium text-muted-foreground"
+            >
+              {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
+            </Label>
+            {description && <Description text={description} />}
+          </div>
           <Switch
             id={name}
             checked={value ?? false}

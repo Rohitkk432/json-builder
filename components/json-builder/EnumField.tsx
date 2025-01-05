@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { Description } from "@/components/json-builder/Description";
 
 interface EnumFieldProps {
   name: string;
@@ -21,6 +22,7 @@ interface EnumFieldProps {
   variant?: 'default' | 'ghost';
   isOptional?: boolean;
   onDelete?: () => void;
+  description?: string;
 }
 
 export function EnumField({ 
@@ -30,7 +32,8 @@ export function EnumField({
   onChange,
   variant = 'default',
   isOptional,
-  onDelete
+  onDelete,
+  description
 }: EnumFieldProps) {
   return (
     <Card className={cn(
@@ -40,12 +43,15 @@ export function EnumField({
     )}>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label 
-            htmlFor={name}
-            className="text-sm font-medium text-muted-foreground"
-          >
-            {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
-          </Label>
+          <div className="space-y-0.5">
+            <Label 
+              htmlFor={name}
+              className="text-sm font-medium text-muted-foreground"
+            >
+              {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
+            </Label>
+            {description && <Description text={description} />}
+          </div>
           {isOptional && value !== undefined && (
             <Button
               variant="ghost"

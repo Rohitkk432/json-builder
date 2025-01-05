@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { Description } from "./Description";
 
 interface StringFieldProps {
   name: string;
@@ -11,6 +14,9 @@ interface StringFieldProps {
   onChange: (value: string) => void;
   onBlur?: () => void;
   variant?: 'default' | 'ghost';
+  isOptional?: boolean;
+  onDelete?: () => void;
+  description?: string;
 }
 
 export function StringField({ 
@@ -18,7 +24,10 @@ export function StringField({
   value, 
   onChange, 
   onBlur,
-  variant = 'default' 
+  variant = 'default',
+  isOptional,
+  onDelete,
+  description
 }: StringFieldProps) {
   return (
     <Card className={cn(
@@ -27,12 +36,30 @@ export function StringField({
       variant === 'ghost' && "bg-transparent border-none shadow-none"
     )}>
       <div className="space-y-2">
-        <Label 
-          htmlFor={name}
-          className="text-sm font-medium text-muted-foreground"
-        >
-          {name}
-        </Label>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label 
+              htmlFor={name}
+              className="text-sm font-medium text-muted-foreground"
+            >
+              {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
+            </Label>
+            {description && <Description text={description} />}
+          </div>
+          {isOptional && value !== undefined && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                onChange(undefined);
+                onDelete?.();
+              }}
+              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         <Input
           id={name}
           value={value || ''}

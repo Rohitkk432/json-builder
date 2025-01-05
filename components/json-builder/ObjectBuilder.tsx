@@ -368,6 +368,7 @@ export function ObjectBuilder({
                   value={value[name]}
                   onChange={(newValue) => handleFieldChange(name, newValue)}
                   isOptional={field.isOptional}
+                  description={field.description}
                   onDelete={field.isOptional ? () => {
                     const newObj = { ...value };
                     delete newObj[name];
@@ -391,6 +392,7 @@ export function ObjectBuilder({
                     }
                   }}
                   isOptional={field.isOptional}
+                  description={field.description}
                   onDelete={field.isOptional ? () => {
                     const newObj = { ...value };
                     delete newObj[name];
@@ -414,6 +416,7 @@ export function ObjectBuilder({
                     }
                   }}
                   isOptional={field.isOptional}
+                  description={field.description}
                   onDelete={field.isOptional ? () => {
                     const newObj = { ...value };
                     delete newObj[name];
@@ -438,6 +441,7 @@ export function ObjectBuilder({
                     }
                   }}
                   isOptional={field.isOptional}
+                  description={field.description}
                 />
               );
             case 'array':
@@ -457,6 +461,7 @@ export function ObjectBuilder({
                     }
                   }}
                   isOptional={field.isOptional}
+                  description={field.description}
                   onDelete={field.isOptional ? () => {
                     const newObj = { ...value };
                     delete newObj[name];

@@ -17,6 +17,9 @@ export function parseTypeDefinitions(typeString: string): any[] {
   const interfaces: { [key: string]: TypeInfo[] } = {};
   let currentInterface = '';
   
+  // Parse comments first
+  const fields = parseInterfaceWithComments(typeString);
+  
   // Split by lines and filter out empty lines
   const lines = typeString.split('\n').filter(line => line.trim());
   
@@ -228,13 +231,17 @@ export function parseTypeDefinitions(typeString: string): any[] {
 
   // Convert TypeInfo to Field structure
   function convertToField(typeInfo: TypeInfo): any {
+    // Get description from comments if available
+    const description = fields[typeInfo.name];
+
     if (typeInfo.type === 'enum' && typeInfo.enumValues) {
       return {
         name: typeInfo.name,
         type: 'enum' as const,
         value: typeInfo.enumValues[0],
         enumValues: typeInfo.enumValues,
-        isOptional: typeInfo.isOptional
+        isOptional: typeInfo.isOptional,
+        description
       };
     }
 
@@ -258,7 +265,8 @@ export function parseTypeDefinitions(typeString: string): any[] {
         type: 'union' as const,
         value: '',
         unionTypes: unionFields,
-        isOptional: typeInfo.isOptional
+        isOptional: typeInfo.isOptional,
+        description
       };
     }
 
@@ -381,7 +389,8 @@ export function parseTypeDefinitions(typeString: string): any[] {
       name: typeInfo.name,
       type: typeMap[typeInfo.type] || 'string',
       value: typeInfo.type === 'boolean' ? false : typeInfo.type === 'number' ? 0 : '',
-      isOptional: typeInfo.isOptional
+      isOptional: typeInfo.isOptional,
+      description
     };
   }
 
@@ -397,4 +406,20 @@ export function parseTypeDefinitions(typeString: string): any[] {
   }
 
   return rootFields;
+}
+
+export function parseInterfaceWithComments(interfaceString: string) {
+  const lines = interfaceString.split('\n');
+  const fields: Record<string, string> = {};
+
+  lines.forEach((line, index) => {
+    // Match field name and inline comment
+    const match = line.match(/(\w+)[\s\:]+[^;]+;?\s*\/\/\s*(.+)/);
+    if (match) {
+      const [_, fieldName, comment] = match;
+      fields[fieldName.trim()] = comment.trim();
+    }
+  });
+
+  return fields;
 }

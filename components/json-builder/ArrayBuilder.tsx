@@ -9,6 +9,7 @@ import { Field } from "@/lib/json-builder/types";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Description } from "./Description";
 
 interface ArrayBuilderProps {
   name: string;
@@ -17,6 +18,7 @@ interface ArrayBuilderProps {
   onChange: (value: any[] | undefined) => void;
   isOptional?: boolean;
   onDelete?: () => void;
+  description?: string;
 }
 
 const getDefaultValueForField = (field: Field): any => {
@@ -53,7 +55,8 @@ export function ArrayBuilder({
   itemType, 
   onChange,
   isOptional,
-  onDelete 
+  onDelete,
+  description
 }: ArrayBuilderProps) {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
@@ -82,9 +85,12 @@ export function ArrayBuilder({
     <Card className="p-4 border-l-4 border-l-orange-500/30 hover:border-l-orange-500">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-muted-foreground">
-            {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
-          </Label>
+          <div className="flex items-center flex-wrap gap-x-1">
+            <Label className="text-sm font-medium text-muted-foreground">
+              {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
+            </Label>
+            {description && <Description text={description} />}
+          </div>
           {isOptional && value !== undefined && (
             <Button
               variant="ghost"

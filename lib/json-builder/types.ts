@@ -5,6 +5,7 @@ export interface BaseField {
   type: FieldType;
   value: any;
   isOptional?: boolean;
+  description?: string;
   enumValues?: string[];
   unionTypes?: FieldType[]; // For union types like number | string
 }
