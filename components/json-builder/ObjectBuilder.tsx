@@ -70,7 +70,7 @@ export function ObjectBuilder({
     if (editingKey.value !== editingKey.originalKey) {
       if (fieldName) {
         const newValue = { ...value[fieldName] };
-        const order = newValue[key].order;
+        const order = newValue[editingKey.originalKey].order;
         delete newValue[editingKey.originalKey];
         newValue[editingKey.value] = {
           order,
@@ -79,7 +79,7 @@ export function ObjectBuilder({
         handleFieldChange(fieldName, newValue);
       } else {
         const newValue = { ...value };
-        const order = newValue[key].order;
+        const order = newValue[editingKey.originalKey].order;
         delete newValue[editingKey.originalKey];
         newValue[editingKey.value] = {
           order,
@@ -161,7 +161,10 @@ export function ObjectBuilder({
                       onChange={(newValue) => {
                         handleFieldChange(field.name, {
                           ...value[field.name],
-                          [key]: newValue
+                          [key]: {
+                            order: value[field.name][key].order,
+                            value: newValue
+                          }
                         });
                       }}
                       level={level + 1}
@@ -287,7 +290,10 @@ export function ObjectBuilder({
                       onChange={(newValue) => {
                         onChange({
                           ...value,
-                          [key]: newValue
+                          [key]: {
+                            order: value[key].order,
+                            value: newValue
+                          }
                         });
                       }}
                       level={level + 1}
@@ -359,7 +365,7 @@ export function ObjectBuilder({
                 <ArrayBuilder
                   key={name}
                   name={name}
-                  value={value[name] || []}
+                  value={Array.isArray(value[name]) ? value[name] : []}
                   itemType={itemType}
                   onChange={(newValue) => handleFieldChange(name, newValue)}
                 />

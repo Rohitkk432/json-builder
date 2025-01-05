@@ -22,14 +22,18 @@ export function ArrayBuilder({ name, value = [], itemType, onChange }: ArrayBuil
   const handleAdd = () => {
     const defaultValue = 
       itemType.type === 'object' ? {} :
+      itemType.type === 'string' ? '' :
       itemType.type === 'number' ? 0 :
-      itemType.type === 'boolean' ? false : '';
+      itemType.type === 'boolean' ? false :
+      null;
     
     onChange([...value, defaultValue]);
   };
 
   const handleRemove = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
+    const newArray = [...value];
+    newArray.splice(index, 1);
+    onChange(newArray);
   };
 
   const handleItemChange = (index: number, newValue: any) => {
@@ -50,7 +54,7 @@ export function ArrayBuilder({ name, value = [], itemType, onChange }: ArrayBuil
           variant="outline"
           size="sm"
           onClick={handleAdd}
-          className="border-dashed hover:border-solid transition-all hover:border-secondary hover:text-secondary"
+          className="border-dashed hover:border-solid transition-all hover:border-primary hover:text-primary"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Item
