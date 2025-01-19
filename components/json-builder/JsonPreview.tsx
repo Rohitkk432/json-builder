@@ -25,7 +25,7 @@ function processValue(value: any): any {
     // Process each property of the object
     const processed: any = {};
     Object.entries(value)
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         // Sort by order if both entries have order
         if (a[1]?.order !== undefined && b[1]?.order !== undefined) {
           return a[1].order - b[1].order;

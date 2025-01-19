@@ -33,7 +33,7 @@ const getDefaultValueForField = (field: Field): any => {
       if (!field.fields) return {};
       const defaultObj: any = {};
       field.fields.forEach(f => {
-        if (!f.optional) {
+        if (!f.isOptional) {
           defaultObj[f.name] = getDefaultValueForField(f);
         }
       });

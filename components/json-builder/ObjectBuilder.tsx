@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { ArrayBuilder } from './ArrayBuilder';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Field } from '@/lib/json-builder/types';
 
 interface ObjectBuilderProps {
   fields?: any[];
@@ -44,7 +45,7 @@ const getDefaultValueForField = (field: Field): any => {
       const defaultObj: any = {};
       field.fields.forEach(f => {
         // Only set default value if the field is required (not optional)
-        if (!f.optional) {
+        if (!f.isOptional) {
           defaultObj[f.name] = getDefaultValueForField(f);
         }
       });
@@ -130,8 +131,8 @@ export function ObjectBuilder({
     return (
       <div className="space-y-3">
         {Object.entries(value[field.name] || {})
-          .sort((a, b) => a[1].order - b[1].order)
-          .map(([key, record], index) => {
+          .sort((a: any, b: any) => a[1].order - b[1].order)
+          .map(([key, record]: any, index: any) => {
             const recordValue = record.value;
             return (
               <Card 
@@ -147,7 +148,7 @@ export function ObjectBuilder({
                     <div className="flex-1">
                       <StringField
                         name={key || `Key ${index + 1}`}
-                        value={editingKey?.id === key ? editingKey.value : key}
+                        value={editingKey && editingKey.id === key ? editingKey.value : key}
                         onChange={(newValue) => handleKeyChange(key, newValue)}
                         onBlur={() => handleKeyBlur(key, recordValue, field.name)}
                         variant="ghost"
@@ -260,8 +261,8 @@ export function ObjectBuilder({
     return (
       <div className="space-y-3">
         {Object.entries(value)
-          .sort((a, b) => a[1].order - b[1].order)
-          .map(([key, record], index) => {
+          .sort((a: any, b: any) => a[1].order - b[1].order)
+          .map(([key, record]: any, index: any) => {
             const recordValue = record.value;
             return (
               <Card 
@@ -279,7 +280,7 @@ export function ObjectBuilder({
                     <div className="flex-1">
                       <StringField
                         name={key || `Key ${index + 1}`}
-                        value={editingKey?.id === key ? editingKey.value : key}
+                        value={editingKey && editingKey.id === key ? editingKey.value : key}
                         onChange={(newValue) => handleKeyChange(key, newValue)}
                         onBlur={() => handleKeyBlur(key, recordValue)}
                         variant="ghost"

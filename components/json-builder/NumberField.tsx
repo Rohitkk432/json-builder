@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { Description } from "@/components/json-builder/Description";
 
 interface NumberFieldProps {
   name: string;
@@ -14,6 +15,7 @@ interface NumberFieldProps {
   variant?: 'default' | 'ghost';
   isOptional?: boolean;
   onDelete?: () => void;
+  description?: string;
 }
 
 export function NumberField({ 
@@ -22,7 +24,8 @@ export function NumberField({
   onChange,
   variant = 'default',
   isOptional,
-  onDelete
+  onDelete,
+  description
 }: NumberFieldProps) {
   return (
     <Card className={cn(
@@ -32,12 +35,15 @@ export function NumberField({
     )}>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label 
-            htmlFor={name}
-            className="text-sm font-medium text-muted-foreground"
-          >
-            {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
-          </Label>
+          <div className="space-y-0.5">
+            <Label 
+              htmlFor={name}
+              className="text-sm font-medium text-muted-foreground"
+            >
+              {name} {isOptional && <span className="text-xs text-muted-foreground">(optional)</span>}
+            </Label>
+            {description && <Description text={description} />}
+          </div>
           {isOptional && value !== undefined && (
             <Button
               variant="ghost"

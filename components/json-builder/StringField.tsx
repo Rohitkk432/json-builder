@@ -51,7 +51,7 @@ export function StringField({
               variant="ghost"
               size="icon"
               onClick={() => {
-                onChange(undefined);
+                onChange('');
                 onDelete?.();
               }}
               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
