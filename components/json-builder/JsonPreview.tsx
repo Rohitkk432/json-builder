@@ -17,8 +17,8 @@ function processValue(value: any): any {
 
   // If it's an object
   if (typeof value === 'object') {
-    // Check if it's a record with order (has both order and value properties)
-    if ('order' in value && 'value' in value) {
+    // Check if it's a record with __order__ (has both __order__ and value properties)
+    if ('__order__' in value && 'value' in value) {
       return processValue(value.value);
     }
 
@@ -26,9 +26,9 @@ function processValue(value: any): any {
     const processed: any = {};
     Object.entries(value)
       .sort((a: any, b: any) => {
-        // Sort by order if both entries have order
-        if (a[1]?.order !== undefined && b[1]?.order !== undefined) {
-          return a[1].order - b[1].order;
+        // Sort by __order__ if both entries have __order__
+        if (a[1]?.__order__ !== undefined && b[1]?.__order__ !== undefined) {
+          return a[1].__order__ - b[1].__order__;
         }
         return 0;
       })

@@ -78,7 +78,7 @@ export function ObjectBuilder({
     onChange({ 
       ...value, 
       [newKey]: { 
-        order: Object.keys(value).length,
+        __order__: Object.keys(value).length,
         value: defaultValue 
       }
     });
@@ -106,19 +106,19 @@ export function ObjectBuilder({
     if (editingKey.value !== editingKey.originalKey) {
       if (fieldName) {
         const newValue = { ...value[fieldName] };
-        const order = newValue[editingKey.originalKey].order;
+        const __order__ = newValue[editingKey.originalKey].__order__;
         delete newValue[editingKey.originalKey];
         newValue[editingKey.value] = {
-          order,
+          __order__,
           value: recordValue
         };
         handleFieldChange(fieldName, newValue);
       } else {
         const newValue = { ...value };
-        const order = newValue[editingKey.originalKey].order;
+        const __order__ = newValue[editingKey.originalKey].__order__;
         delete newValue[editingKey.originalKey];
         newValue[editingKey.value] = {
-          order,
+          __order__,
           value: recordValue
         };
         onChange(newValue);
@@ -131,7 +131,7 @@ export function ObjectBuilder({
     return (
       <div className="space-y-3">
         {Object.entries(value[field.name] || {})
-          .sort((a: any, b: any) => a[1].order - b[1].order)
+          .sort((a: any, b: any) => a[1].__order__ - b[1].__order__)
           .map(([key, record]: any, index: any) => {
             const recordValue = record.value;
             return (
@@ -198,7 +198,7 @@ export function ObjectBuilder({
                         handleFieldChange(field.name, {
                           ...value[field.name],
                           [key]: {
-                            order: value[field.name][key].order,
+                            __order__: value[field.name][key].__order__,
                             value: newValue
                           }
                         });
@@ -219,7 +219,7 @@ export function ObjectBuilder({
             handleFieldChange(field.name, {
               ...value[field.name],
               [newKey]: {
-                order: Object.keys(value[field.name] || {}).length,
+                __order__: Object.keys(value[field.name] || {}).length,
                 value: defaultValue
               }
             });
@@ -261,7 +261,7 @@ export function ObjectBuilder({
     return (
       <div className="space-y-3">
         {Object.entries(value)
-          .sort((a: any, b: any) => a[1].order - b[1].order)
+          .sort((a: any, b: any) => a[1].__order__ - b[1].__order__)
           .map(([key, record]: any, index: any) => {
             const recordValue = record.value;
             return (
@@ -329,7 +329,7 @@ export function ObjectBuilder({
                         onChange({
                           ...value,
                           [key]: {
-                            order: value[key].order,
+                            __order__: value[key].__order__,
                             value: newValue
                           }
                         });

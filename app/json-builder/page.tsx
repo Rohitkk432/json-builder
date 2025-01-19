@@ -15,7 +15,11 @@ export default function JsonBuilderPage() {
   const [fields, setFields] = useState<Field[]>([]);
 
   const handleCopyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
+    const cleanedData = JSON.parse(JSON.stringify(jsonData, (key, value) => {
+      if (key === "__order__") return undefined;
+      return value;
+    }, 2));
+    navigator.clipboard.writeText(JSON.stringify(cleanedData, null, 2));
   };
 
   const handleTypesParsed = (newFields: Field[]) => {
