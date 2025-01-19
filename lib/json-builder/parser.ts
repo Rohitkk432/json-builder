@@ -13,12 +13,13 @@ type TypeInfo = {
   isDirectType?: boolean;
 };
 
-export function parseTypeDefinitions(typeString: string): any[] {
+export function parseTypeDefinitions(typeStringRaw: string): any[] {
   const interfaces: { [key: string]: TypeInfo[] } = {};
   let currentInterface = '';
   
   // Parse comments first
-  const fields = parseInterfaceWithComments(typeString);
+  const fields = parseInterfaceWithComments(typeStringRaw);
+  const typeString = removeComments(typeStringRaw);
   
   // Split by lines and filter out empty lines
   const lines = typeString.split('\n').filter(line => line.trim());
@@ -423,3 +424,7 @@ export function parseInterfaceWithComments(interfaceString: string) {
 
   return fields;
 }
+
+const removeComments = (typeStringRaw: string): string => {
+  return typeStringRaw.replace(/\/\*[\s\S]*?\*\/|\/\/.*(?=\n)/g, '').trim();
+};
